@@ -1,0 +1,54 @@
+classDiagram
+    class Owner {
+        +str name
+        +list~TimeSlot~ availability
+        +list~Pet~ pets
+        +add_pet(pet: Pet) None
+        +get_schedule() Schedule
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +str breed
+        +int age
+        +list~str~ conditions
+        +list~Task~ tasks
+        +add_task(task: Task) None
+    }
+
+    class Task {
+        +str task_type
+        +int duration_minutes
+        +int priority
+        +str frequency
+        +Pet pet
+    }
+
+    class TimeSlot {
+        +int start_hour
+        +int start_minute
+        +int duration_minutes
+        +overlaps(other: TimeSlot) bool
+    }
+
+    class Schedule {
+        +Owner owner
+        +date date
+        +list~Task~ tasks
+        +add_task(task: Task) None
+        +explain() str
+    }
+
+    class Scheduler {
+        +Owner owner
+        +generate(date: date) Schedule
+    }
+
+    Owner "1" --> "many" Pet : owns
+    Pet "1" --> "many" Task : requires
+    Owner "1" --> "many" TimeSlot : available
+    Scheduler --> Owner : uses
+    Scheduler --> Schedule : produces
+    Schedule --> Owner : belongs to
+    Schedule "1" --> "many" Task : contains

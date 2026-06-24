@@ -5,6 +5,7 @@
 **a. Initial design**
 
 - Briefly describe your initial UML design.
+    > Three core actions a user should be able to perform are add/edit a pet and attributes, schedule tasks for a pet, and print a schedule (to the screen). The main objects needed for this project would be Owner, Pet, Task, and Schedule. 
 - What classes did you include, and what responsibilities did you assign to each?
 
 **b. Design changes**

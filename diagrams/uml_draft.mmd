@@ -4,6 +4,7 @@ classDiagram
         +list~TimeSlot~ availability
         +list~Pet~ pets
         +add_pet(pet: Pet) None
+        +all_tasks() list~Task~
         +get_schedule() Schedule
     }
 
@@ -23,26 +24,41 @@ classDiagram
         +int priority
         +str frequency
         +Pet pet
+        +set~date~ completed_dates
+        +is_done_on(for_date: date) bool
+        +mark_done_on(for_date: date, done: bool) None
+        +done_in_week_of(for_date: date) bool
     }
 
     class TimeSlot {
         +int start_hour
         +int start_minute
         +int duration_minutes
+        +int start_minutes
+        +int end_minutes
         +overlaps(other: TimeSlot) bool
+        +label() str
     }
 
     class Schedule {
         +Owner owner
         +date date
         +list~Task~ tasks
-        +add_task(task: Task) None
+        +list~TimeSlot~ slots
+        +list~Task~ unscheduled
+        +add_task(task: Task, slot: TimeSlot) None
+        +mark_done(index: int, done: bool) None
+        +is_done(index: int) bool
+        +is_complete() bool
+        +progress() tuple~int, int~
+        +total_minutes() int
         +explain() str
     }
 
     class Scheduler {
         +Owner owner
-        +generate(date: date) Schedule
+        +needs_doing(task: Task, for_date: date) bool
+        +generate(for_date: date) Schedule
     }
 
     Owner "1" --> "many" Pet : owns
@@ -52,3 +68,4 @@ classDiagram
     Scheduler --> Schedule : produces
     Schedule --> Owner : belongs to
     Schedule "1" --> "many" Task : contains
+    Schedule "1" --> "many" TimeSlot : assigns

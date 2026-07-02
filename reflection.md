@@ -7,11 +7,14 @@
 - Briefly describe your initial UML design.
     > Three core actions a user should be able to perform are add/edit a pet and attributes, schedule tasks for a pet, and print a schedule (to the screen). The main objects needed for this project would be Owner, Pet, Task, and Schedule. 
 - What classes did you include, and what responsibilities did you assign to each?
+    > There ended up being a few more. TimeSlot represents abstract blocks of time, e.g. the start and end times when an owner is free. Task is meant to represent a task and holds metadata about a task, like which pet it concerns, how long it takes, the priority, the dates that the task has been completed, and the frequency. Pet represents a pet and holds metadata such as the pet's name, species, breed, age, the tasks required by the pet, and even medical condition (that particular one was at the behest of Claude). Owner represents an owner and the associated info, like their name, availability, and the owner's pets, with the ability to add pets, view tasks required by the owner, and get the owner's schedule. Schedule represents the schedule for an owner, like the tasks and timeslots, whereas Scheduler generates a Schedule for an Owner.
 
 **b. Design changes**
 
 - Did your design change during implementation?
+    Yes
 - If yes, describe at least one change and why you made it.
+    Claude came up with the idea of backlinking a Pet onto a Task so that when dealing with Task objects one can determine which Pet it the Task belongs to.
 
 ---
 

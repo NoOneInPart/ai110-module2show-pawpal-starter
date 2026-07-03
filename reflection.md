@@ -12,9 +12,9 @@
 **b. Design changes**
 
 - Did your design change during implementation?
-    Yes
+    > Yes
 - If yes, describe at least one change and why you made it.
-    Claude came up with the idea of backlinking a Pet onto a Task so that when dealing with Task objects one can determine which Pet it the Task belongs to.
+    > Claude came up with the idea of backlinking a Pet onto a Task so that when dealing with Task objects one can determine which Pet it the Task belongs to.
 
 ---
 
@@ -28,6 +28,7 @@
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
+    > It doesn't group identical tasks between pets that can be accomplished concurrently, like feeding and walking
 - Why is that tradeoff reasonable for this scenario?
 
 ---

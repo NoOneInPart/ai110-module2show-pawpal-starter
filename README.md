@@ -74,14 +74,12 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
-
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | `Scheduler.generate` | Sorts due tasks by priority (highest first), then shortest duration, so important — and quick — tasks claim time first. **App:** the "Current tasks" list is separately sortable by duration/priority/frequency/pet/title (asc/desc). |
+| Filtering | `Scheduler.needs_doing`, `Scheduler.generate` | `needs_doing` drops tasks already satisfied for their period; `generate` sends any task that fits no window to `Schedule.unscheduled`. **App:** the "Current tasks" list filters by pet and by today's status (All/Pending/Done). |
+| Conflict handling | `Scheduler.generate` | Per-window cursors advance as tasks are placed (best-fit), so no two tasks are ever assigned overlapping time. **App:** duplicate availability windows and same-title/frequency tasks are rejected on add. |
+| Recurring tasks | `Scheduler.needs_doing`, `Task.done_in_week_of`, `Task.is_done_on` | `daily` always due; `weekly` hidden once `done_in_week_of` the ISO week; `once` hidden after any completion. **App:** completion is toggled via per-task checkboxes (`Task.mark_done_on`) and persists across reruns through `st.session_state`. |
 
 ## 📸 Demo Walkthrough
 

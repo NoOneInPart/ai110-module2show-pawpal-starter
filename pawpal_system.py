@@ -18,15 +18,6 @@ class TimeSlot:
         """Minutes since midnight when this slot ends."""
         return self.start_minutes + self.duration_minutes
 
-    def overlaps(self, other: "TimeSlot") -> bool:
-        """Return True if this slot and ``other`` share any point in time.
-
-        Two half-open intervals [a_start, a_end) and [b_start, b_end) overlap
-        exactly when each starts before the other ends. Back-to-back slots
-        (one ending where the next begins) do not overlap.
-        """
-        return self.start_minutes < other.end_minutes and other.start_minutes < self.end_minutes
-
     def label(self) -> str:
         """Human-readable start time, e.g. ``08:05``."""
         return f"{self.start_hour:02d}:{self.start_minute:02d}"
@@ -64,9 +55,13 @@ class Task:
 @dataclass
 class Pet:
     name: str
-    species: str
-    breed: str
-    age: int
+    # Descriptive metadata about the pet. None of these currently affect any
+    # logic — the scheduler only reads each task's duration/priority/frequency,
+    # never the pet's traits. They're kept (with defaults, so a pet needs only a
+    # name) as a hook for future features like species-specific care templates.
+    species: str = "other"
+    breed: str = ""
+    age: int = 0
     conditions: list[str] = field(default_factory=list)
     tasks: list[Task] = field(default_factory=list)
 
@@ -207,7 +202,11 @@ class Scheduler:
         schedule = Schedule(owner=self.owner, date=for_date)
 
         due_tasks = [task for task in self.owner.all_tasks() if self.needs_doing(task, for_date)]
-        due_tasks.sort(key=lambda t: (-t.priority, -t.duration_minutes))
+        # Highest priority first, then SHORTEST duration first. Ordering short
+        # tasks ahead of long ones at equal priority fits more important work
+        # into scarce time — a 5-min medication shouldn't be crowded out by a
+        # 45-min session of the same priority.
+        due_tasks.sort(key=lambda t: (-t.priority, t.duration_minutes))
 
         # Track a moving cursor (minutes-from-midnight) within each slot, in
         # chronological order so earlier availability is filled first.
@@ -215,20 +214,29 @@ class Scheduler:
         cursors = [window.start_minutes for window in windows]
 
         for task in due_tasks:
-            placed = False
-            for i, window in enumerate(windows):
-                if cursors[i] + task.duration_minutes <= window.end_minutes:
-                    start = cursors[i]
-                    slot = TimeSlot(
-                        start_hour=start // 60,
-                        start_minute=start % 60,
-                        duration_minutes=task.duration_minutes,
-                    )
-                    schedule.add_task(task, slot)
-                    cursors[i] += task.duration_minutes
-                    placed = True
-                    break
-            if not placed:
+            # Best-fit: among windows that can still hold this task, pick the
+            # one that leaves the least leftover room. This packs tasks tightly
+            # instead of letting an early task carve into a big window it didn't
+            # need, which would strand later tasks that could otherwise have fit.
+            candidates = [
+                i for i, window in enumerate(windows)
+                if cursors[i] + task.duration_minutes <= window.end_minutes
+            ]
+            if not candidates:
                 schedule.unscheduled.append(task)
+                continue
+            # Tightest fit = window with the least room left right now. The room
+            # *after* placing is (end - cursor - duration), but duration is the
+            # same for every candidate of this task, so it doesn't affect which
+            # window wins — compare current room (end - cursor) directly.
+            i = min(candidates, key=lambda i: windows[i].end_minutes - cursors[i])
+            start = cursors[i]
+            slot = TimeSlot(
+                start_hour=start // 60,
+                start_minute=start % 60,
+                duration_minutes=task.duration_minutes,
+            )
+            schedule.add_task(task, slot)
+            cursors[i] += task.duration_minutes
 
         return schedule

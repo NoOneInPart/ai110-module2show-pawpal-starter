@@ -56,6 +56,16 @@ def get_or_create_pet(name: str) -> Pet:
     return pet
 
 
+def _mark_done_from_checkbox(task: Task, key: str, for_date: date) -> None:
+    """Sync a schedule checkbox's new value onto its task's completion history.
+
+    Used as an ``on_change`` handler so the mutation lands before Streamlit
+    reruns the script, keeping the task list (rendered earlier) in sync on the
+    same interaction rather than one event behind.
+    """
+    task.mark_done_on(for_date, st.session_state[key])
+
+
 # --- Availability -----------------------------------------------------------
 st.subheader("Availability")
 st.caption("Time windows the owner is free. Tasks get packed into these.")
@@ -219,17 +229,35 @@ if st.session_state.get("show_schedule"):
             # Checkbox is the source of the toggle; we mirror it onto the task's
             # completion history (keyed by today's date) so it persists. The
             # render index keeps the key unique even if two tasks share a title.
+            #
+            # The mutation runs in an on_change callback, not inline: Streamlit
+            # fires callbacks *before* it reruns the script top-to-bottom, so
+            # the task list rendered earlier in the page reflects this toggle on
+            # the same interaction. Mutating inline (after render) would leave
+            # that list one event stale.
             key = f"done|{i}|{task.pet.name}|{task.task_type}"
             label = (
                 f"{slot.label()} — {task.task_type} "
                 f"({task.duration_minutes} min, "
                 f"{PRIORITY_LABEL.get(task.priority, task.priority)})"
             )
-            done = st.checkbox(label, value=task.is_done_on(today), key=key)
-            task.mark_done_on(today, done)
+            st.checkbox(
+                label,
+                value=task.is_done_on(today),
+                key=key,
+                on_change=_mark_done_from_checkbox,
+                args=(task, key, today),
+            )
 
         done_count, total = schedule.progress()
         st.progress(done_count / total, text=f"{done_count}/{total} done")
+
+    if schedule.has_conflicts():
+        st.error("Time conflicts (overlapping availability double-booked): " + ", ".join(
+            f"{schedule.slots[i].label()} {schedule.tasks[i].task_type} overlaps "
+            f"{schedule.slots[j].label()} {schedule.tasks[j].task_type}"
+            for i, j in schedule.conflicts()
+        ))
 
     if schedule.unscheduled:
         st.warning("Skipped (no time available): " + ", ".join(

@@ -66,20 +66,29 @@ pytest
 pytest --cov
 ```
 
-Sample test output:
+Test output:
 
 ```
-# Paste your pytest output here
+======================================================================================== test session starts ========================================================================================
+platform win32 -- Python 3.14.5, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\t0mbu\Desktop\ai110-module2show-pawpal-starter
+plugins: anyio-4.14.1
+collected 14 items                                                                                                                                                                                   
+
+tests\test_pawpal.py ..............                                                                                                                                                            [100%]
+
+======================================================================================== 14 passed in 0.03s =========================================================================================
 ```
+My confidence level is probably like a 4 regarding its resilience to breaking.
 
 ## 📐 Smarter Scheduling
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | `Scheduler.generate` | Sorts due tasks by priority (highest first), then shortest duration, so important — and quick — tasks claim time first. **App:** the "Current tasks" list is separately sortable by duration/priority/frequency/pet/title (asc/desc). |
-| Filtering | `Scheduler.needs_doing`, `Scheduler.generate` | `needs_doing` drops tasks already satisfied for their period; `generate` sends any task that fits no window to `Schedule.unscheduled`. **App:** the "Current tasks" list filters by pet and by today's status (All/Pending/Done). |
-| Conflict handling | `Scheduler.generate` | Per-window cursors advance as tasks are placed (best-fit), so no two tasks are ever assigned overlapping time. **App:** duplicate availability windows and same-title/frequency tasks are rejected on add. |
-| Recurring tasks | `Scheduler.needs_doing`, `Task.done_in_week_of`, `Task.is_done_on` | `daily` always due; `weekly` hidden once `done_in_week_of` the ISO week; `once` hidden after any completion. **App:** completion is toggled via per-task checkboxes (`Task.mark_done_on`) and persists across reruns through `st.session_state`. |
+| Task sorting | `Scheduler.generate` | Places due tasks by priority (highest first), then shortest duration, then returns them in chronological (start-time) order for display; so important — and quick — tasks claim time first. **Streamlit (`app.py`):** the "Current tasks" list is separately sortable by duration/priority/frequency/pet/title (asc/desc) within the frontend. |
+| Filtering | `Scheduler.needs_doing`, `Scheduler.generate` | `needs_doing` drops tasks already satisfied for their period; `generate` sends any task that fits no window to `Schedule.unscheduled`. **Streamlit (`app.py`):** the "Current tasks" list filters by pet and by today's status (All/Pending/Done) are handled within the frontend. |
+| Conflict handling | `Scheduler.generate` | Per-window cursors advance as tasks are placed (best-fit), so no two tasks are ever assigned overlapping time. **Streamlit (`app.py`):** duplicate availability windows and same-title/frequency tasks are rejected in the "Add window"/"Add task" handlers. |
+| Recurring tasks | `Scheduler.needs_doing`, `Task.done_in_week_of`, `Task.is_done_on` | `daily` always due; `weekly` hidden once `done_in_week_of` the ISO week; `once` hidden after any completion. **Streamlit (`app.py`):** the completion logic is backend (`Task.mark_done_on`), but Streamlit owns the UX — the checkbox wiring and keeping the `Task` objects alive across reruns via `st.session_state`. |
 
 ## 📸 Demo Walkthrough
 

@@ -130,6 +130,34 @@ class Schedule:
         """Total scheduled time across all placed tasks."""
         return sum(task.duration_minutes for task in self.tasks)
 
+    def conflicts(self) -> list[tuple[int, int]]:
+        """Return index pairs of scheduled tasks whose time slots overlap.
+
+        The scheduler advances a cursor within each availability window, so it
+        never double-books inside one window. But *overlapping* availability
+        windows can place two tasks at the same wall-clock time. This surfaces
+        those double-bookings as ``(i, j)`` index pairs (i < j) into ``tasks``.
+        Two slots overlap when one starts before the other ends; slots that
+        merely touch (one ends exactly as the next starts) do not conflict.
+        """
+        placed = sorted(
+            ((i, slot) for i, slot in enumerate(self.slots) if slot is not None),
+            key=lambda pair: pair[1].start_minutes,
+        )
+        found: list[tuple[int, int]] = []
+        for a in range(len(placed)):
+            i, slot_a = placed[a]
+            for b in range(a + 1, len(placed)):
+                j, slot_b = placed[b]
+                if slot_b.start_minutes >= slot_a.end_minutes:
+                    break  # sorted by start: no later slot can overlap slot_a
+                found.append((i, j) if i < j else (j, i))
+        return found
+
+    def has_conflicts(self) -> bool:
+        """True when any two scheduled tasks overlap in time."""
+        return bool(self.conflicts())
+
     def explain(self) -> str:
         """Return a readable, ordered explanation of the plan."""
         lines = [f"Daily plan for {self.owner.name} — {self.date.isoformat()}"]
@@ -150,6 +178,17 @@ class Schedule:
             f"Total scheduled: {self.total_minutes()} min across {total} task(s); "
             f"{done}/{total} done."
         )
+
+        conflicts = self.conflicts()
+        if conflicts:
+            lines.append("Time conflicts (overlapping availability double-booked):")
+            for i, j in conflicts:
+                a, b = self.tasks[i], self.tasks[j]
+                sa, sb = self.slots[i], self.slots[j]
+                lines.append(
+                    f"  ! {sa.label()} {a.task_type} overlaps "
+                    f"{sb.label()} {b.task_type}"
+                )
 
         if self.unscheduled:
             lines.append("Skipped (no time available):")
@@ -190,8 +229,9 @@ class Scheduler:
         Strategy:
         1. Collect every task that still needs doing on ``for_date`` (its
            recurrence is due and it isn't already satisfied for its period).
-        2. Sort by priority (highest first), then longest duration, so the
-           most important work claims time before anything else.
+        2. Sort by priority (highest first), then shortest duration, so the
+           most important work claims time first and short tasks aren't
+           crowded out by long ones of equal priority.
         3. Walk the owner's availability slots in chronological order,
            placing each task into the first slot with enough remaining room.
         4. Anything that never fits is recorded as ``unscheduled``.
@@ -238,5 +278,13 @@ class Scheduler:
             )
             schedule.add_task(task, slot)
             cursors[i] += task.duration_minutes
+
+        # Tasks were placed in priority order; present them in chronological
+        # (start-time) order so both explain() and the UI read top-to-bottom
+        # through the day. tasks and slots are reordered together so they stay
+        # parallel and index-based completion (mark_done/is_done) stays valid.
+        order = sorted(range(len(schedule.slots)), key=lambda i: schedule.slots[i].start_minutes)
+        schedule.tasks = [schedule.tasks[i] for i in order]
+        schedule.slots = [schedule.slots[i] for i in order]
 
         return schedule

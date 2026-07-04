@@ -2,6 +2,16 @@
 
 You are building **PawPal+**, a Streamlit app that helps a pet owner plan care tasks for their pet.
 
+## Features
+
+- **Priority-first, shortest-duration scheduling** — `Scheduler.generate` packs due tasks by priority (highest first), breaking ties by shortest duration so a quick, important task (like a 5-minute medication) isn't crowded out by a long one of equal priority.
+- **Best-fit time placement** — each task is placed into the *tightest* availability window that can still hold it (least leftover room), packing work densely so early tasks don't carve into large windows and strand later ones. A per-window cursor advances as tasks are placed, so tasks never double-book within a single window.
+- **Recurrence-aware task selection** — `Scheduler.needs_doing` decides what's due today: `daily` tasks always appear, `weekly` tasks drop off once completed anywhere in the current ISO calendar week, and `once` tasks disappear after they're ever done.
+- **Date-keyed completion that persists** — completions are stored on each `Task` keyed by date (`completed_dates`), so regenerating the plan for the same day preserves what's already checked off, and each day is independent (done Tuesday ≠ done Wednesday).
+- **Overflow handling** — any task that fits no remaining window is collected into `Schedule.unscheduled` rather than silently dropped, and surfaced in the plan explanation.
+- **Conflict detection** — `Schedule.conflicts` / `has_conflicts` flag any two placed tasks whose times overlap (possible when availability windows themselves overlap), reporting them as index pairs; touching slots that merely abut do not count as conflicts.
+- **Chronological, explainable plans** — tasks are placed in priority order but reordered by start time for display, and `Schedule.explain` renders a readable, checked-off daily plan with totals, progress (`done/total`), conflicts, and skipped tasks.
+
 ## Scenario
 
 A busy pet owner needs help staying consistent with pet care. They want an assistant that can:
@@ -94,10 +104,15 @@ My confidence level is probably like a 4 regarding its resilience to breaking.
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. Enter your name and the name of your pet (unless you happen to be named Jordan with a pet named Mochi, then you can skip this step)
+2. Add the times you are available (starting time, length of time)
+3. Add the tasks for that particular pet (title, duration, priority, frequency)
+4. Repeat for more tasks, or other pets (change the pet name in step 1 before adding a task for another pet)
+5. Sort or filter the list of tasks if you want
+6. Hit "Generate Schedule"
+7. ~~Profit~~
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+![Screenshot1](1.png)
+![Screenshot1](2.png)
+![Screenshot1](3.png)

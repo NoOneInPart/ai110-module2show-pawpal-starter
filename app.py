@@ -16,8 +16,7 @@ st.title("🐾 PawPal+")
 # actually persist in the UI — the same Task objects stay alive.)
 if "owner" not in st.session_state:
     owner = Owner(name="Jordan")
-    # Seed one availability window so the scheduler can place tasks out of the box.
-    owner.availability.append(TimeSlot(start_hour=8, start_minute=0, duration_minutes=120))
+    # Start with no availability windows — the user adds their own below.
     st.session_state.owner = owner
 owner = st.session_state.owner
 

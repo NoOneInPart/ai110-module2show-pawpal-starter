@@ -21,6 +21,7 @@ def main() -> None:
     )
 
     # Two pets with different needs.
+    # (you can add extra metadata like the pet species, breed, age, conditions but they don't actually affect scheduling)
     mochi = Pet(name="Mochi", species="dog", breed="Corgi", age=3)
     biscuit = Pet(name="Biscuit", species="cat", breed="Tabby", age=7, conditions=["senior"])
 
